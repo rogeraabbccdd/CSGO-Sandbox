@@ -5,7 +5,6 @@
 #include <clientprefs>
 #include <cstrike>
 #include <smlib>
-#include <emitsoundany>
 
 #pragma newdecls required
 
@@ -22,9 +21,6 @@ int iLimit;
 Menu ModelMenu[MAX_LANGUAGES];
 char MenuLanguage[MAX_LANGUAGES][4];
 
-// Model
-int iModelCount;
-
 public Plugin myinfo =
 {
 	name = "[CS:GO] Sandbox",
@@ -38,11 +34,12 @@ public void OnPluginStart()
 {
 	RegConsoleCmd("sm_model", CMD_Model, "Models menu");
 	RegConsoleCmd("sm_dmodel", CMD_DeleteBlock, "Delete model");
+	RegConsoleCmd("sm_lm", 	CMD_LastMover, "Last mover");
 	
 	Cvar_Save = CreateConVar("sm_auto_save", "60.0", "Auto save in x seconds?\n0.0 = disabled, FLOAT VALUE ONLY", _, true, 0.0);
 	Cvar_Save.AddChangeHook(OnConVarChanged);
 	
-	Cvar_Limit = CreateConVar("sm_model_limit", "300", "Max models", _, true, 0.0);
+	Cvar_Limit = CreateConVar("sm_model_limit", "1700", "Max edicts limit when spawning model.", _, true, 0.0);
 	Cvar_Limit.AddChangeHook(OnConVarChanged);
 	
 	AutoExecConfig(true, "kento_sandbox");
@@ -105,7 +102,7 @@ void LoadModels()
 		SetFailState("Fatal error: Unable to read configuration file \"%s\"!", Configfile);
 	}
 	
-	char name[30], lang[4], path[1024], title[64], finalOutput[100];
+	char name[30], lang[4], path[1024], finalOutput[100];
 	int langID, nextLangID = -1;
 	int g_iTotalModelsAvailable = 0;
 	do
@@ -187,14 +184,9 @@ public int ModelMenu_Handler(Menu menu, MenuAction action, int client, int param
 
 void SpawnModel(int client, char [] path)
 {
-	if(iLimit - iModelCount > 0)
+	if(EdictCount() <= iLimit)
 	{
 		int model = CreateEntityByName("prop_dynamic_override");
-		iModelCount++;
-		
-		char cName[64];
-		Format(cName, sizeof(cName), "xXx_model1337_xXx_%d", iModelCount);
-		SetEntPropString(model, Prop_Data, "m_iName", cName);
 		DispatchKeyValue(model, "model", path);
 		SetEntPropFloat(model, Prop_Send, "m_flModelScale", 1.0);
 		
@@ -377,6 +369,16 @@ stock bool IsValidClient(int client)
 	return IsClientInGame(client);
 }
 
+int EdictCount()
+{
+	int count;
+	for (int iEntity = 0; iEntity <= 2048; iEntity++) 
+	{
+		if (!IsValidEntity(iEntity) || !IsValidEdict(iEntity)) continue;
+		++count;
+    }
+	return count;
+}
 
 /******************************************************************************************************************************/
 // Code taken from boomix's base builder
@@ -457,7 +459,7 @@ public Action OnPlayerRunCmd(int client, int &iButtons, int &iImpulse, float fVe
 
 public void FirstTimePress(int client)
 {
-	g_iPlayerSelectedBlock[client] = GetTargetBlock(client);
+	g_iPlayerSelectedBlock[client] = GetTargetEntity(client);
 	
 	PrintToChat(client, "%d", g_iPlayerSelectedBlock[client]);
 	
@@ -505,7 +507,6 @@ public void FirstTimePress(int client)
 					g_fPlayerSelectedBlockDistance[client] = 250.0;
 				
 				ColorBlock(client, false);
-				Sounds_TookBlock(client);
 				
 				//LockBlock(client);
 				SetBlockOwner(g_iPlayerSelectedBlock[client], client);
@@ -557,8 +558,6 @@ public void StoppedMovingBlock(int client)
 		else
 			ColorBlock(client, false);
 			
-		Sounds_DropBlock(client);
-		
 		SetVariantString("!activator");
 		AcceptEntityInput(g_iPlayerSelectedBlock[client], "SetParent", g_iPlayerSelectedBlock[client], g_iPlayerSelectedBlock[client], 0);
 	}
@@ -592,17 +591,10 @@ public void BlockMoving_OnPrepTimeStart()
 
 //**	FUNCTIONS	**//
 
-int GetTargetBlock(int client)
+int GetTargetEntity(int client)
 {
 	int entity = GetClientAimTarget(client, false);
-	if (IsValidEntity(entity))
-	{
-		char classname[32];
-		GetEdictClassname(entity, classname, 32);
-		
-		if(StrContains(classname, "prop_dynamic") != -1)
-			return entity;
-	}
+	if (IsValidEntity(entity))	return entity;
 	return -1;
 }
 
@@ -653,25 +645,6 @@ void ColorBlock(int client, bool reset)
 	}
 }
 
-void RotateEntity(int client)
-{
-	int blocktorotate = GetTargetBlock(client);
-	
-	if(IsValidEntity(blocktorotate) && blocktorotate != -1) {
-		
-		if(GetBlockOwner(blocktorotate) == 0) {
-	
-			float angles[3];
-			GetEntPropVector(blocktorotate, Prop_Send, "m_angRotation", angles);
-			angles[0] += 0.0;
-			angles[1] += 45.0;
-			angles[2] += 0.0;
-			TeleportEntity(blocktorotate, NULL_VECTOR, angles, NULL_VECTOR);
-		
-		}	
-	}
-}
-
 void RotateBlock(int entity)
 {
 	if (IsValidEntity(entity))
@@ -679,7 +652,7 @@ void RotateBlock(int entity)
 		float angles[3];
 		GetEntPropVector(entity, Prop_Send, "m_angRotation", angles);
 		angles[0] += 0.0;
-		angles[1] += 45.0;
+		angles[1] += 10.0;
 		angles[2] += 0.0;
 		TeleportEntity(entity, NULL_VECTOR, angles, NULL_VECTOR);
 	}
@@ -687,7 +660,7 @@ void RotateBlock(int entity)
 
 public Action CMD_DeleteBlock(int client, int args)
 {
-	int entity = GetTargetBlock(client);
+	int entity = GetTargetEntity(client);
 	
 	if (entity != -1)
 		if(IsValidEntity(entity))
@@ -725,21 +698,11 @@ int GetLastMover(int entity)
 	return LastMover;
 }
 
-public void Sounds_TookBlock(int client)
-{
-	EmitSoundToClientAny(client, "sourcemod/basebuilder/block_grab.mp3");
-}
-
-public void Sounds_DropBlock(int client)
-{
-	EmitSoundToClientAny(client, "sourcemod/basebuilder/block_drop.mp3");
-}
-
 void LockBlock(int client, int entitys = 0, bool lockedWithG = false)
 {
 	if(IsValidClient(client) && GetClientTeam(client) != CS_TEAM_SPECTATOR)
 	{
-		int entity = (entitys == 0) ? GetTargetBlock(client) : entitys;
+		int entity = (entitys == 0) ? GetTargetEntity(client) : entitys;
 			
 		if (entity != -1)
 		{
@@ -793,7 +756,23 @@ void ColorBlockByEntity(int client, int entity, bool reset)
 			Entity_SetRenderColor(entity, 255, 255, 255, 255);
 		else Entity_SetRenderColor(entity, colorr[client], colorg[client], colorb[client], 255);
 	}
+}
+
+public Action CMD_LastMover(int client, int args)
+{
+	int entity = GetTargetEntity(client);
 	
+	if(IsValidEntity(entity)) {
+		int lastmover = GetLastMover(entity);
+		if(lastmover > 0) {
+			char username[MAX_NAME_LENGTH];
+			GetClientName(lastmover, username, sizeof(username));
+			CPrintToChat(client, "%T", "Last mover", client, username);
+		} else {
+			CPrintToChat(client, "%T", "Not moved", client);
+		}
+	}
+
 }
 
 public bool IsAdmin(int client)
