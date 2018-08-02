@@ -1,0 +1,85 @@
+//**********************************************  Valid Colors	********************************************************
+// {NORMAL}, {DARKRED}, {PINK}, {YELLOW}, {GREEN}, {LIGHTGREEN}, {RED}, {GRAY}, {BLUE}, {DARKBLUE}, {PURPLE}, {ORANGE} *
+//**********************************************************************************************************************
+//                                     http://i.imgur.com/q2wb8Cu.png                                                  *
+//{NORMAL} = x01 | {DARKRED} = x02 | {PINK} = x03 | {GREEN} = x04 | {YELLOW} = x09 | {LIGHTGREEN} = x06 | {RED} = x07  *
+//{GRAY} = x08 | {BLUE} = x0B | {DARKBLUE} = x0C | {PURPLE} = x0E|  {ORANGE} = x10                                     *
+//**********************************************************************************************************************
+"Phrases"
+{
+	
+	//******************* PrintToChat *******************
+	
+	"Entity Limit"
+	{
+		"#format"		""
+		"en"			"{GREEN}[SB] {RED}Your have reached entity limit, please delete some entities."
+		"zho"			"{GREEN}[SB] {RED}已達到物件上限，請刪除一些物件."
+	}
+	
+	"Last Mover"
+	{
+		"#format"		"{1:s}"
+		"en"			"{GREEN}[SB] {NORMAL}Last mover is {1}."
+		"zho"			"{GREEN}[SB] {NORMAL}最後移動這個的人是 {1}."
+	}
+	
+	"Not Moved"
+	{
+		"#format"		""
+		"en"			"{GREEN}[SB] {NORMAL}Nobody moved this before."
+		"zho"			"{GREEN}[SB] {NORMAL}沒有人動過這個物件."
+	}
+	
+	//*********************** Menu ***********************
+	
+	"Model Menu Title"
+	{
+		"#format"		""
+		"en"			"Select Model Type"
+		"zho"			"選擇模組類型"
+	}
+	
+	"Dynamic Model Title"
+	{
+		"#format"		""
+		"en"			"Select Dynamic Model"
+		"zho"			"選擇 Dynamic Model"
+	}
+	
+	"Physics Model Title"
+	{
+		"#format"		""
+		"en"			"Select Physics Model"
+		"zho"			"選擇 Physics Model"
+	}
+	
+	"Static Model Title"
+	{
+		"#format"		""
+		"en"			"Select Static Model"
+		"zho"			"選擇 Static Model"
+	}
+	
+	"Dynamic Model"
+	{
+		"#format"		""
+		"en"			"Dynamic Model"
+		"zho"			"Dynamic Model"
+	}
+	
+	"Physics Model"
+	{
+		"#format"		""
+		"en"			"Physics Model"
+		"zho"			"Physics Model"
+	}
+	
+	"Static Model"
+	{
+		"#format"		""
+		"en"			"Static Model"
+		"zho"			"Static Model"
+	}
+	
+}	
